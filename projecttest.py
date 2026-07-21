@@ -4,10 +4,12 @@ Applikasi streamlit chatbot
 Cara jalankan:
 >>> streamlit run app2.py
 """
-
+from dotenv import load_dotenv
 import os
-from pathlib import Path
 
+load_dotenv()
+
+from pathlib import Path
 import streamlit as st
 
 from rag.loader import load_document
@@ -18,7 +20,7 @@ from rag.chat import ask_question
 
 from langchain.messages import AIMessage
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+###from langchain_google_genai import ChatGoogleGenerativeAI
 
 # =========================
 # PAGE CONFIG (WAJIB PALING AWAL)
@@ -33,7 +35,7 @@ st.set_page_config(
 # =========================
 # HEADER
 # =========================
-st.title("📦 Product Owner AI")
+st.title("📦 IT Solution Lead Tools")
 st.caption("Enterprise Requirement & Documentation Assistant")
 
 # =========================
@@ -66,20 +68,20 @@ with st.sidebar:
     )
     st.divider()
 
-# ===========================
-# Build Knowledge Base
-# ===========================
+    # ===========================
+    #   Build Knowledge Base
+    # ===========================
 
-if st.button("⚙️ Process Knowledge Base", use_container_width=True):
+    if st.button("⚙️ Process Knowledge Base", use_container_width=True):
 
-    if not uploaded_files:
-        st.warning("⚠️ Silakan upload minimal satu dokumen.")
-        st.stop()
+        if not uploaded_files:
+            st.warning("⚠️ Silakan upload minimal satu dokumen.")
+            st.stop()
 
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 
-    if not api_key:
-        st.error("""
+        if not api_key:
+            st.error("""
 ❌ Google Gemini API Key belum dikonfigurasi.
 
 Silakan tambahkan salah satu environment variable berikut:
@@ -90,114 +92,21 @@ atau
 
 Setelah itu restart aplikasi Streamlit.
 """)
-        st.stop()
+            st.stop()
 
-    file_paths = [
-        str(UPLOAD_DIR / file.name)
-        for file in uploaded_files
-    ]
+        file_paths = [
+            str(UPLOAD_DIR / file.name)
+            for file in uploaded_files
+        ]
 
-    total_chunks = build_knowledge_base(file_paths)
+        total_chunks = build_knowledge_base(file_paths)
 
-    st.success(
-        f"✅ Knowledge Base berhasil dibuat!\n\nTotal Chunk: {total_chunks}"
-    )
-
-# ===========================
-# Test Retrieval
-# ===========================
-
-st.divider()
-
-st.subheader("🔍 Test Retrieval")
-
-question = st.text_input("Masukkan pertanyaan")
-
-if st.button("Search Document"):
-
-    retriever = get_retriever()
-
-    docs = retriever.invoke(question)
-
-    st.success(f"Ditemukan {len(docs)} dokumen")
-
-    for i, doc in enumerate(docs, start=1):
-
-        st.write(f"### Chunk {i}")
-
-        st.write(doc.page_content)
-
-        st.divider()
-
-st.divider()
-
-st.subheader("💬 Ask AI")
-
-question = st.text_input(
-    "Tanyakan sesuatu tentang dokumen",
-    key="chat_question"
-)
-
-if st.button("Ask AI"):
-
-    with st.spinner("AI sedang berpikir..."):
-
-        answer = ask_question(question)
-
-    st.success("Jawaban")
-
-    st.write(answer)
-
-if uploaded_files:
-
-    for uploaded_file in uploaded_files:
-
-        save_path = UPLOAD_DIR / uploaded_file.name
-
-        with open(save_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-
-    st.success(f"{len(uploaded_files)} file uploaded successfully.")
-for uploaded_file in uploaded_files:
-
-    file_path = str(UPLOAD_DIR / uploaded_file.name)
-
-    documents = load_document(file_path)
-
-    chunks = chunk_documents(documents)
-
-    st.write(f"📄 File: {uploaded_file.name}")
-    st.write(f"📑 Total Document : {len(documents)}")
-    st.write(f"🧩 Total Chunk : {len(chunks)}")
-
-    if len(chunks) > 0:
-        st.subheader("Chunk Pertama")
-        st.text(chunks[0].page_content[:500])
-
-            
-### API Key processing ###
-if os.environ.get("GOOGLE_API_KEY") is None:
-    st.markdown("API Key")
-    col1, col2 = st.columns([0.8, 0.2])
-    with col1:
-        api_key = st.text_input(
-            "API Key",
-            type="password",
-            label_visibility="collapsed",
-            placeholder="Type your API key...",
-        )
-    with col2:
-        is_api_key_submitted = st.button(
-            "Submit",
+        st.success(
+            f"✅ Knowledge Base berhasil dibuat!\n\nTotal Chunk: {total_chunks}"
         )
 
-    if is_api_key_submitted and api_key != "":
-        os.environ["GOOGLE_API_KEY"] = api_key
-        st.rerun()
-    if os.environ.get("GOOGLE_API_KEY") is None:
-        st.stop()
 
-client = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
+### client = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
 
 ### Kolom Chat ###
 # Bikin chat history kosong jika belum ada
@@ -485,31 +394,103 @@ Think like a Senior Product Owner working with Enterprise Engineering Teams.
         )
     ]
 
+# Welcome Screen
+if len(st.session_state["chat_history"]) == 1:
+
+    with st.chat_message("AI"):
+
+        st.markdown("""
+# 👋 Welcome to Product Owner AI
+
+I can help you analyze and create:
+
+- 📄 Business Requirement Document (BRD)
+- 📑 Product Requirement Document (PRD)
+- 📘 Software Requirement Specification (SRS)
+- 📚 Functional Specification Document (FSD)
+- 👤 User Stories & Acceptance Criteria
+- 🔗 API Documentation
+- 🔄 Business Process
+- 🏗️ System Design
+- 📊 Gap Analysis
+- 📝 Technical Documentation
+
+### Two ways to use me
+
+### 💬 General AI Assistant
+Ask me anything about Product Management, Business Analysis, or Software Development.
+
+### 📂 Knowledge Base Mode
+Upload one or more documents, process the Knowledge Base, then ask questions specifically about those documents.
+""")
+
 # Tampilkan chat history yang ada selama ini
 for chat in st.session_state["chat_history"]:
-    if type(chat) is SystemMessage:
+
+    if isinstance(chat, SystemMessage):
         continue
-    elif type(chat) is HumanMessage:
+
+    elif isinstance(chat, HumanMessage):
         role = "User"
-    elif type(chat) is AIMessage:
+
+    else:
         role = "AI"
+
     with st.chat_message(role):
-        st.markdown(chat.text)
+        st.markdown(chat.content)
+
 
 # Minta prompt dari user
-user_prompt = st.chat_input("Ask AI")
-if not user_prompt:
-    st.stop()
-st.session_state["chat_history"].append(HumanMessage(user_prompt))
+user_prompt = st.chat_input(
+    "How can I help you today as Product Owner?"
+)
 
-# Tampilkan prompt dari user
-with st.chat_message("User"):
-    st.markdown(user_prompt)
+if user_prompt:
 
-# Invoke ke AI, ambil response-nya
-response = client.invoke(st.session_state["chat_history"])
-st.session_state["chat_history"].append(response)
+    # Simpan pertanyaan user ke history
+    st.session_state["chat_history"].append(
+        HumanMessage(content=user_prompt)
+    )
 
-# Tampilkan response AI
-with st.chat_message("AI"):
-    st.markdown(response.text)
+    # Tampilkan pertanyaan user
+    with st.chat_message("User"):
+        st.markdown(user_prompt)
+
+    # Tanya ke AI
+    try:
+
+        with st.spinner("🤖 Thinking..."):
+
+            result = ask_question(user_prompt)
+
+            answer = result["answer"]
+            sources = result["sources"]
+
+    except Exception as e:
+
+        if "503" in str(e):
+
+            st.warning(
+                "⚠️ Gemini is currently experiencing high demand. Please try again in a few moments."
+            )
+
+            st.stop()
+
+        raise
+
+    # Simpan jawaban AI ke history
+    st.session_state["chat_history"].append(
+        AIMessage(content=answer)
+    )
+
+    # Tampilkan jawaban AI
+    with st.chat_message("AI"):
+
+        st.markdown(answer)
+
+        if sources:
+
+            with st.expander("📄 Sources"):
+
+                for source in sources:
+                    st.markdown(f"- {source}")

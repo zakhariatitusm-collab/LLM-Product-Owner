@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Streamlit
+.streamlit/
+
+# Environment
+.env
+
+# Vector Database
+vectorstore/
+
+# Upload Documents
+uploads/
+
+# VSCode
+.vscode/
+
+# Mac
+.DS_Store
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Vector Database
+vectorstore/
+
+# Uploaded Files
+uploads/
+
+# VS Code
+.vscode/

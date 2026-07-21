@@ -1,26 +1,54 @@
 import os
+from pathlib import Path
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
 
-from rag.retrieval import get_retriever
 from rag.prompt import get_rag_prompt
+from rag.retrieval import get_retriever
 
 
 def ask_question(question):
 
-    retriever = get_retriever()
+    # ==========================
+    # Default (General AI Mode)
+    # ==========================
+    context = ""
+    docs = []
+    sources = []
 
-    docs = retriever.invoke(question)
+    # ==========================
+    # Knowledge Base Mode
+    # ==========================
+    if (
+        os.path.exists("vectorstore/index.faiss")
+        and os.path.exists("vectorstore/index.pkl")
+    ):
 
-    context = "\n\n".join(
-        [doc.page_content for doc in docs]
-    )
+        retriever = get_retriever()
 
+        docs = retriever.invoke(question)
+
+        context = "\n\n".join(
+            doc.page_content for doc in docs
+        )
+
+        for doc in docs:
+
+            source = Path(
+                doc.metadata.get("source", "Unknown")
+            ).name
+
+            if source not in sources:
+                sources.append(source)
+
+    # ==========================
+    # LLM
+    # ==========================
     prompt = get_rag_prompt()
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite",
         google_api_key=os.getenv("GOOGLE_API_KEY"),
         temperature=0
     )
@@ -32,4 +60,7 @@ def ask_question(question):
         "question": question
     })
 
-    return answer
+    return {
+        "answer": answer,
+        "sources": sources
+    }
